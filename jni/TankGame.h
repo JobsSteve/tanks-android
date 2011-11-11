@@ -12,6 +12,7 @@ class TankGame
     GLuint gvPositionHandle;
     GLuint gvNormalHandle;
     GLuint gmModelViewHandle;
+    GLuint gvColorHandle;
 
     k3d::model floor;
     k3d::model walls;

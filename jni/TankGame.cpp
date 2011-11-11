@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
@@ -36,6 +38,11 @@ bool TankGame::setupGraphics(int w, int h)
     LOGI("glGetUniformLocation(\"mModelView\") = %d\n",
             gmModelViewHandle);
 
+    gvColorHandle = glGetUniformLocation(gProgram, "vColor");
+    checkGlError("glGetUniformLocation");
+    LOGI("glGetUniformLocation(\"vColor\") = %d\n",
+            gmModelViewHandle);
+
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
 
@@ -51,16 +58,37 @@ bool TankGame::setupGraphics(int w, int h)
 void TankGame::loadlevel()
 {
     floor.loadObj("/sdcard/tanks/floor.obj");
+    walls.loadObj("/sdcard/tanks/wall.obj");
 }
 
 void TankGame::renderFrame()
 {
-    k3d::mat4 modelView;
+    static float angle = 0.0;
 
-    modelView.translatef(1.0, 0.0, 1.0);
-    modelView.scalef(0.5, 0.5, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    k3d::mat4 modelView;
+    k3d::mat4 temp;
+
+    modelView.infPerspective();
+    modelView.lookAt(k3d::vec3(1.0, 2.0, 5.0), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
+    temp = modelView;
+
+    modelView.scalef(5.0, 5.0, 1.0);
     modelView.glUniform(gmModelViewHandle);
+
+    glUniform4f(gvColorHandle, 0.3, 0.26, 0.1, 1.0);
     floor.draw(gvPositionHandle, gvNormalHandle);
+
+    modelView = temp;
+    modelView.translatef(2.0, 1.0, 1.0);
+    modelView.scalef(0.5, 0.5, 0.5);
+    modelView.glUniform(gmModelViewHandle);
+
+    glUniform4f(gvColorHandle, 0.0, 1.0, 0.0, 1.0);
+    walls.draw(gvPositionHandle, gvNormalHandle);
+
+    angle += 0.01;
 }
 
 void TankGame::step()

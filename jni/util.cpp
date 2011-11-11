@@ -25,7 +25,7 @@ const char *readFile(const char *filename)
     while (std::getline(in, line))
         strbuf.append(line + '\n');
 
-    char *buf = new char[strbuf.size() * sizeof(*buf)];
+    char *buf = new char[(strbuf.size() + 1) * sizeof(*buf)];
     strcpy(buf, strbuf.c_str());
 
     return buf;
