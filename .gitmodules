@@ -1,0 +1,3 @@
+[submodule "jni/libk3d"]
+	path = jni/libk3d
+	url = git@192.168.1.5:libk3d.git

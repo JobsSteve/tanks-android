@@ -17,8 +17,8 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libtanks
-LOCAL_CFLAGS    := -Werror
-LOCAL_SRC_FILES := tanks.cpp TankGame.cpp util.cpp model.cpp vec3.cpp mat4.cpp
+LOCAL_CFLAGS    := -Werror -Ijni/libk3d/
+LOCAL_SRC_FILES := tanks.cpp TankGame.cpp util.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp
 LOCAL_LDLIBS    := -llog -lGLESv2
 
 include $(BUILD_SHARED_LIBRARY)

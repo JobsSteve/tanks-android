@@ -4,7 +4,7 @@
 #include <GLES2/gl2.h>
 #include <vector>
 
-#include "k3d.h"
+#include "libk3d/k3d.h"
 
 class TankGame
 {
