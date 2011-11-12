@@ -6,22 +6,27 @@
 #include "util.h"
 #include "TankGame.h"
 
-bool TankGame::setupGraphics(int w, int h)
+void TankGame::initialize()
 {
     const char *vsfilename = "/sdcard/tanks/tanks.vs";
     const char *fsfilename = "/sdcard/tanks/tanks.fs";
+
+    glClearColor(0.0, 0.0, 0.0, 1.0f);
+    checkGlError("glClearColor");
 
     printGLString("Version", GL_VERSION);
     printGLString("Vendor", GL_VENDOR);
     printGLString("Renderer", GL_RENDERER);
     printGLString("Extensions", GL_EXTENSIONS);
 
-    LOGI("setupGraphics(%d, %d)", w, h);
     gProgram = createProgram(readFile(vsfilename), readFile(fsfilename));
     if (!gProgram) {
         LOGE("Could not create program.");
-        return false;
+        return;
     }
+
+    glUseProgram(gProgram);
+    checkGlError("glUseProgram");
 
     gvPositionHandle = glGetAttribLocation(gProgram, "vPosition");
     checkGlError("glGetAttribLocation");
@@ -38,19 +43,39 @@ bool TankGame::setupGraphics(int w, int h)
     LOGI("glGetUniformLocation(\"mModelView\") = %d\n",
             gmModelViewHandle);
 
+    gmNormalMatrixHandle = glGetUniformLocation(gProgram, "mNormalMatrix");
+    checkGlError("glGetUniformLocation");
+    LOGI("glGetUniformLocation(\"mNormalMatrix\") = %d\n",
+            gmNormalMatrixHandle);
+
+    gmModelViewProjectionHandle = glGetUniformLocation(gProgram, "mModelViewProjection");
+    LOGI("glGetUniformLocation(\"mModelViewProjection\") = %d\n",
+            gmModelViewProjectionHandle);
+
+    gvLightSource0Handle = glGetUniformLocation(gProgram, "vLightSource0");
+    LOGI("glGetUniformLocation(\"vLightSource0\") = %d\n",
+            gvLightSource0Handle);
+
     gvColorHandle = glGetUniformLocation(gProgram, "vColor");
     checkGlError("glGetUniformLocation");
     LOGI("glGetUniformLocation(\"vColor\") = %d\n",
             gmModelViewHandle);
 
+    int depth;
+    glEnable(GL_DEPTH_TEST);
+    glGetIntegerv(GL_DEPTH_BITS, &depth);
+    LOGI("GL_DEPTH_BITS = %d\n", depth);
+}
+
+bool TankGame::reshape(int w, int h)
+{
+    float ratio = (float)h/(float)w;
+
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
 
-    glClearColor(0.0, 0.0, 0.0, 1.0f);
-    checkGlError("glClearColor");
-
-    glUseProgram(gProgram);
-    checkGlError("glUseProgram");
+    mProjection.loadIdentity();
+    mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.5, -20);
 
     return true;
 }
@@ -58,34 +83,40 @@ bool TankGame::setupGraphics(int w, int h)
 void TankGame::loadlevel()
 {
     floor.loadObj("/sdcard/tanks/floor.obj");
-    walls.loadObj("/sdcard/tanks/wall.obj");
+    walls.loadObj("/sdcard/tanks/teapot.obj");
 }
 
 void TankGame::renderFrame()
 {
     static float angle = 0.0;
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    checkGlError("glClear");
 
     k3d::mat4 modelView;
-    k3d::mat4 temp;
+    k3d::mat4 normalMatrix;
+    k3d::vec3 light(1.5, 2.8, 2.4);
 
-    modelView.infPerspective();
-    modelView.lookAt(k3d::vec3(1.0, 2.0, 5.0), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
-    temp = modelView;
+    glUseProgram(gProgram);
+    checkGlError("glUseProgram");
 
-    modelView.scalef(5.0, 5.0, 1.0);
+    modelView.lookAt(k3d::vec3(3.2, 4.2, 5.9), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
+
+    light = modelView * light;
+    glUniform3f(gvLightSource0Handle, light.x, light.y, light.z);
+    checkGlError("glUniform3f");
+
     modelView.glUniform(gmModelViewHandle);
+    checkGlError("glUniformMatrix4fv1");
+    normalMatrix = modelView;
+    normalMatrix.inverse().transpose();
+    normalMatrix.glUniform(gmNormalMatrixHandle);
+    checkGlError("glUniformMatrix4fv2");
+    (mProjection * modelView).glUniform(gmModelViewProjectionHandle);
+    checkGlError("glUniformMatrix4fv3");
 
-    glUniform4f(gvColorHandle, 0.3, 0.26, 0.1, 1.0);
-    floor.draw(gvPositionHandle, gvNormalHandle);
-
-    modelView = temp;
-    modelView.translatef(2.0, 1.0, 1.0);
-    modelView.scalef(0.5, 0.5, 0.5);
-    modelView.glUniform(gmModelViewHandle);
-
-    glUniform4f(gvColorHandle, 0.0, 1.0, 0.0, 1.0);
+    glUniform4f(gvColorHandle, 1.0, 1.0, 1.0, 1.0);
+    checkGlError("glUniform4f");
     walls.draw(gvPositionHandle, gvNormalHandle);
 
     angle += 0.01;

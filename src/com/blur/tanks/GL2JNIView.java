@@ -70,7 +70,7 @@ class GL2JNIView extends GLSurfaceView {
 
     public GL2JNIView(Context context) {
         super(context);
-        init(false, 0, 0);
+        init(false, 8, 0);
     }
 
     public GL2JNIView(Context context, boolean translucent, int depth, int stencil) {
@@ -329,11 +329,11 @@ class GL2JNIView extends GLSurfaceView {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            GL2JNILib.init(width, height);
+            GL2JNILib.reshape(width, height);
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            // Do nothing.
+            GL2JNILib.init();
         }
     }
 }

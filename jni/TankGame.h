@@ -12,8 +12,12 @@ class TankGame
     GLuint gvPositionHandle;
     GLuint gvNormalHandle;
     GLuint gmModelViewHandle;
+    GLuint gmModelViewProjectionHandle;
+    GLuint gmNormalMatrixHandle;
     GLuint gvColorHandle;
+    GLuint gvLightSource0Handle;
 
+    k3d::mat4 mProjection;
     k3d::model floor;
     k3d::model walls;
     std::vector<k3d::model> tanks;
@@ -24,7 +28,9 @@ class TankGame
 public:
     TankGame() { loadlevel(); }
 
-    bool setupGraphics(int w, int h);
+    bool reshape(int w, int h);
+
+    void initialize();
 
     void step();
 };
