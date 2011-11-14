@@ -11,6 +11,8 @@ void TankGame::initialize()
     const char *vsfilename = "/sdcard/tanks/tanks.vs";
     const char *fsfilename = "/sdcard/tanks/tanks.fs";
 
+    LOGI("TankGame::initialize()\n");
+
     glClearColor(0.0, 0.0, 0.0, 1.0f);
     checkGlError("glClearColor");
 
@@ -71,6 +73,8 @@ bool TankGame::reshape(int w, int h)
 {
     float ratio = (float)h/(float)w;
 
+    LOGI("TankGame::reshape()\n");
+
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
 
@@ -83,7 +87,7 @@ bool TankGame::reshape(int w, int h)
 void TankGame::loadlevel()
 {
     floor.loadObj("/sdcard/tanks/floor.obj");
-    walls.loadObj("/sdcard/tanks/teapot.obj");
+    walls.loadObj("/sdcard/tanks/tank_treads.obj");
 }
 
 void TankGame::renderFrame()
@@ -100,7 +104,7 @@ void TankGame::renderFrame()
     glUseProgram(gProgram);
     checkGlError("glUseProgram");
 
-    modelView.lookAt(k3d::vec3(3.2, 4.2, 5.9), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
+    modelView.lookAt(k3d::vec3(2.2, 3.2, 2.9), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
 
     light = modelView * light;
     glUniform3f(gvLightSource0Handle, light.x, light.y, light.z);

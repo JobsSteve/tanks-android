@@ -18,7 +18,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libtanks
 LOCAL_CFLAGS    := -Werror -Ijni/libk3d/
-LOCAL_SRC_FILES := tanks.cpp TankGame.cpp util.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp
-LOCAL_LDLIBS    := -llog -lGLESv2
+LOCAL_SRC_FILES := TankGame.cpp util.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp main.cpp
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
+LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
 include $(BUILD_SHARED_LIBRARY)
+
+$(call import-module,android/native_app_glue)
