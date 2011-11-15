@@ -9,20 +9,18 @@
 
 class Tank;
 
+// This could be a static class
+// i.e. since only one instance of TankGame will be used by an app
+// anyways, there's no point of allowing creation of multiple instances.
+// but it could have some uses when it comes to multiplayer (I doubt it tho)
 class TankGame
 {
 friend class Tank;
     GLuint gProgram;
     GLuint gvPositionHandle;
     GLuint gvNormalHandle;
-    GLuint gmModelViewHandle;
-    GLuint gmModelViewProjectionHandle;
-    GLuint gmNormalMatrixHandle;
     GLuint gvColorHandle;
-    GLuint gvLightSource0Handle;
 
-    k3d::mat4 mProjection;
-    k3d::mat4 modelView;
     k3d::model floor;
     k3d::model walls;
     std::vector<Tank> tanks;

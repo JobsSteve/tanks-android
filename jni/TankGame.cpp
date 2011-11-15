@@ -6,10 +6,16 @@
 #include "util.h"
 #include "TankGame.h"
 
+using k3d::gl;
+
 void TankGame::initialize()
 {
     const char *vsfilename = "/sdcard/tanks/tanks.vs";
     const char *fsfilename = "/sdcard/tanks/tanks.fs";
+    GLuint gmModelViewHandle;
+    GLuint gmModelViewProjectionHandle;
+    GLuint gmNormalMatrixHandle;
+    GLuint gvLightSource0Handle;
 
     Tank::initialize();
 
@@ -65,6 +71,9 @@ void TankGame::initialize()
     LOGI("glGetUniformLocation(\"vColor\") = %d\n",
             gmModelViewHandle);
 
+    k3d::gl::initialize(gmModelViewHandle, gmModelViewProjectionHandle,
+                        gmNormalMatrixHandle, gvLightSource0Handle);
+
     int depth;
     glEnable(GL_DEPTH_TEST);
     glGetIntegerv(GL_DEPTH_BITS, &depth);
@@ -80,8 +89,8 @@ bool TankGame::reshape(int w, int h)
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
 
-    mProjection.loadIdentity();
-    mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.5, -20);
+    gl::mProjection.loadIdentity();
+    gl::mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.5, -20);
 
     return true;
 }
@@ -99,50 +108,29 @@ void TankGame::renderFrame()
     checkGlError("glClear");
 
     k3d::mat4 tmpMat;
-    k3d::mat4 normalMatrix;
     k3d::vec3 light(0.5, 0.8, 5.0);
 
     glUseProgram(gProgram);
     checkGlError("glUseProgram");
 
-    modelView.loadIdentity();
-    modelView.lookAt(k3d::vec3(-8.0, 0.0, 0.2), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 0.0, 1.0));
+    gl::mModelView.loadIdentity();
+    gl::mModelView.lookAt(k3d::vec3(-8.0, 0.0, 0.2), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 0.0, 1.0));
 
-    light = modelView * light;
-    glUniform3f(gvLightSource0Handle, light.x, light.y, light.z);
-    checkGlError("glUniform3f");
+    gl::vLight0 = light;
+    gl::sendLight0();
 
-    tmpMat = modelView;
+    tmpMat = gl::mModelView;
 
-    modelView.scalef(8.0, 8.0, 1.0);
-
-    modelView.glUniform(gmModelViewHandle);
-    checkGlError("glUniformMatrix4fv1");
-    normalMatrix = modelView;
-    normalMatrix.inverse().transpose();
-    normalMatrix.glUniform(gmNormalMatrixHandle);
-    checkGlError("glUniformMatrix4fv2");
-    (mProjection * modelView).glUniform(gmModelViewProjectionHandle);
-    checkGlError("glUniformMatrix4fv3");
-
+    gl::mModelView.scalef(8.0, 8.0, 1.0);
+    gl::sendMatrices();
     glUniform4f(gvColorHandle, 0.4, 0.33, 0.29, 1.0);
     checkGlError("glUniform4f");
     floor.draw(gvPositionHandle, gvNormalHandle);
 
-    modelView = tmpMat;
-
-    modelView.glUniform(gmModelViewHandle);
-    checkGlError("glUniformMatrix4fv1");
-    normalMatrix = modelView;
-    normalMatrix.inverse().transpose();
-    normalMatrix.glUniform(gmNormalMatrixHandle);
-    checkGlError("glUniformMatrix4fv2");
-    (mProjection * modelView).glUniform(gmModelViewProjectionHandle);
-    checkGlError("glUniformMatrix4fv3");
-
+    gl::mModelView = tmpMat;
+    gl::sendMatrices();
     glUniform4f(gvColorHandle, 0.1, 0.8, 2.9, 1.0);
     checkGlError("glUniform4f");
-
     for (unsigned i = 0; i < tanks.size(); i++)
         tanks[i].draw(gvPositionHandle, gvNormalHandle);
 }
