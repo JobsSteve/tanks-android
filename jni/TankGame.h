@@ -5,9 +5,13 @@
 #include <vector>
 
 #include "libk3d/k3d.h"
+#include "Tank.h"
+
+class Tank;
 
 class TankGame
 {
+friend class Tank;
     GLuint gProgram;
     GLuint gvPositionHandle;
     GLuint gvNormalHandle;
@@ -18,9 +22,10 @@ class TankGame
     GLuint gvLightSource0Handle;
 
     k3d::mat4 mProjection;
+    k3d::mat4 modelView;
     k3d::model floor;
     k3d::model walls;
-    std::vector<k3d::model> tanks;
+    std::vector<Tank> tanks;
 
     void loadlevel();
 

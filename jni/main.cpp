@@ -67,8 +67,6 @@ struct engine {
 static int engine_init_display(struct engine* engine) {
     // initialize OpenGL ES and EGL
 
-    LOGI("\t\t\t\t\tMeow!\n");
-
     /*
      * Here specify the attributes of the desired configuration.
      * Below, we select an EGLConfig with at least 8 bits per color
@@ -99,23 +97,16 @@ static int engine_init_display(struct engine* engine) {
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
     eglInitialize(display, 0, 0);
-/*
-    eglGetConfigs(display, configs, 100, &numConfigs);
-    for (int i = 0; i < numConfigs; i++) {
-        EGLint val = -1;
-        eglGetConfigAttrib(display, configs[i], EGL_CONTEXT_CLIENT_VERSION, &val);
-        LOGI("config[%d]:\nEGL_CONTEXT_CLIENT_VERSION = %d\n", i, val);
-        eglGetConfigAttrib(display, configs[i], EGL_DEPTH_SIZE, &val);
-        LOGI("EGL_DEPTH_SIZE = %d\n", val);
-    }
-*/
+
     /* Here, the application chooses the configuration it desires. In this
      * sample, we have a very simplified selection process, where we pick
      * the first EGLConfig that matches our criteria */
     eglChooseConfig(display, attribs, &config, 1, &numConfigs);
 
-    if (numConfigs <= 0)
+    if (numConfigs <= 0) {
         LOGE("No matching config found\n");
+        return -1;
+    }
 
     /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
      * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
@@ -146,6 +137,8 @@ static int engine_init_display(struct engine* engine) {
     gGame = new TankGame();
     gGame->initialize();
     gGame->reshape(w, h);
+
+    LOGI("done with init\n");
 
     return 0;
 }
@@ -222,22 +215,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine_term_display(engine);
             break;
         case APP_CMD_GAINED_FOCUS:
-            // When our app gains focus, we start monitoring the accelerometer.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_enableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-                // We'd like to get 60 events per second (in us).
-                ASensorEventQueue_setEventRate(engine->sensorEventQueue,
-                        engine->accelerometerSensor, (1000L/60)*1000);
-            }
             break;
         case APP_CMD_LOST_FOCUS:
-            // When our app loses focus, we stop monitoring the accelerometer.
-            // This is to avoid consuming battery while not being used.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_disableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-            }
             // Also stop animating.
             engine->animating = 0;
             engine_draw_frame(engine);
@@ -261,13 +240,6 @@ void android_main(struct android_app* state) {
     state->onAppCmd = engine_handle_cmd;
     state->onInputEvent = engine_handle_input;
     engine.app = state;
-
-    // Prepare to monitor accelerometer
-    engine.sensorManager = ASensorManager_getInstance();
-    engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-            ASENSOR_TYPE_ACCELEROMETER);
-    engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
-            state->looper, LOOPER_ID_USER, NULL, NULL);
 
     if (state->savedState != NULL) {
         // We are starting with a previous saved state; restore from it.
@@ -293,20 +265,6 @@ void android_main(struct android_app* state) {
                 source->process(state, source);
             }
 
-            // If a sensor has data, process it now.
-            if (ident == LOOPER_ID_USER) {
-                if (engine.accelerometerSensor != NULL) {
-                    ASensorEvent event;
-                    while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
-                            &event, 1) > 0) {
-                        /* LOGI("accelerometer: x=%f y=%f z=%f",
-                                event.acceleration.x, event.acceleration.y,
-                                event.acceleration.z);
-                        */
-                    }
-                }
-            }
-
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
@@ -315,12 +273,6 @@ void android_main(struct android_app* state) {
         }
 
         if (engine.animating) {
-            // Done with events; draw next animation frame.
-            engine.state.angle += .01f;
-            if (engine.state.angle > 1) {
-                engine.state.angle = 0;
-            }
-
             // Drawing is throttled to the screen update rate, so there
             // is no need to do timing here.
             engine_draw_frame(&engine);
