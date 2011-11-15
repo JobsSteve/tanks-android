@@ -17,14 +17,12 @@ class Tank {
     float speed; // magnitude
     k3d::vec2 aim;
 
-    TankGame *game;
-
 public:
-    Tank(TankGame *ggame, k3d::vec2 ppos) : game(ggame), pos(ppos), aim(0.0, 0.0), velocity(0.0, 0.0) {}
+    Tank(k3d::vec2 ppos) : pos(ppos), aim(0.0, 0.0), velocity(0.0, 0.0) {}
 
     static void initialize();
 
-    void draw(GLuint gvPositionHandle, GLuint gvNormalHandle);
+    void draw();
 
     void step();
 };

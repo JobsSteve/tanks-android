@@ -8,18 +8,23 @@
 
 using k3d::gl;
 
+// There's some oop non intuitiveness here
+// this should really be called only once...
+// again this stems from the fact that TankGame
+// should basically be static
 void TankGame::initialize()
 {
     const char *vsfilename = "/sdcard/tanks/tanks.vs";
     const char *fsfilename = "/sdcard/tanks/tanks.fs";
-    GLuint gmModelViewHandle;
-    GLuint gmModelViewProjectionHandle;
-    GLuint gmNormalMatrixHandle;
-    GLuint gvLightSource0Handle;
+    GLuint gvPosition, gvNormal;
+    GLuint gmModelView;
+    GLuint gmModelViewProjection;
+    GLuint gmNormalMatrix;
+    GLuint gvLightSource0;
 
+    // Again this is a load level kinda thing
+    // but we need to do it only once so.....
     Tank::initialize();
-
-    LOGI("TankGame::initialize()\n");
 
     glClearColor(0.0, 0.0, 0.0, 1.0f);
     checkGlError("glClearColor");
@@ -38,41 +43,41 @@ void TankGame::initialize()
     glUseProgram(gProgram);
     checkGlError("glUseProgram");
 
-    gvPositionHandle = glGetAttribLocation(gProgram, "vPosition");
+    gvPosition = glGetAttribLocation(gProgram, "vPosition");
     checkGlError("glGetAttribLocation");
     LOGI("glGetAttribLocation(\"vPosition\") = %d\n",
-            gvPositionHandle);
+            gvPosition);
 
-    gvNormalHandle = glGetAttribLocation(gProgram, "vNormal");
+    gvNormal = glGetAttribLocation(gProgram, "vNormal");
     checkGlError("glGetAttribLocation");
     LOGI("glGetAttribLocation(\"vNormal\") = %d\n",
-            gvNormalHandle);
+            gvNormal);
 
-    gmModelViewHandle = glGetUniformLocation(gProgram, "mModelView");
+    gmModelView = glGetUniformLocation(gProgram, "mModelView");
     checkGlError("glGetUniformLocation");
     LOGI("glGetUniformLocation(\"mModelView\") = %d\n",
-            gmModelViewHandle);
+            gmModelView);
 
-    gmNormalMatrixHandle = glGetUniformLocation(gProgram, "mNormalMatrix");
+    gmNormalMatrix = glGetUniformLocation(gProgram, "mNormalMatrix");
     checkGlError("glGetUniformLocation");
     LOGI("glGetUniformLocation(\"mNormalMatrix\") = %d\n",
-            gmNormalMatrixHandle);
+            gmNormalMatrix);
 
-    gmModelViewProjectionHandle = glGetUniformLocation(gProgram, "mModelViewProjection");
+    gmModelViewProjection = glGetUniformLocation(gProgram, "mModelViewProjection");
     LOGI("glGetUniformLocation(\"mModelViewProjection\") = %d\n",
-            gmModelViewProjectionHandle);
+            gmModelViewProjection);
 
-    gvLightSource0Handle = glGetUniformLocation(gProgram, "vLightSource0");
+    gvLightSource0 = glGetUniformLocation(gProgram, "vLightSource0");
     LOGI("glGetUniformLocation(\"vLightSource0\") = %d\n",
-            gvLightSource0Handle);
+            gvLightSource0);
 
-    gvColorHandle = glGetUniformLocation(gProgram, "vColor");
+    gvColor = glGetUniformLocation(gProgram, "vColor");
     checkGlError("glGetUniformLocation");
     LOGI("glGetUniformLocation(\"vColor\") = %d\n",
-            gmModelViewHandle);
+            gmModelView);
 
-    k3d::gl::initialize(gmModelViewHandle, gmModelViewProjectionHandle,
-                        gmNormalMatrixHandle, gvLightSource0Handle);
+    k3d::gl::initialize(gvPosition, gvNormal, gmModelView, gmModelViewProjection,
+                        gmNormalMatrix, gvLightSource0);
 
     int depth;
     glEnable(GL_DEPTH_TEST);
@@ -95,11 +100,13 @@ bool TankGame::reshape(int w, int h)
     return true;
 }
 
-void TankGame::loadlevel()
+void TankGame::loadLevel()
 {
     floor.loadObj("/sdcard/tanks/floor.obj");
     walls.loadObj("/sdcard/tanks/wall.obj");
-    tanks.push_back(Tank(this, k3d::vec2(-6.0, 0.0)));
+    tanks.clear();
+    tanks.push_back(Tank(k3d::vec2(-6.0, 0.0)));
+    tanks.push_back(Tank(k3d::vec2(1.0, 1.0)));
 }
 
 void TankGame::renderFrame()
@@ -114,7 +121,7 @@ void TankGame::renderFrame()
     checkGlError("glUseProgram");
 
     gl::mModelView.loadIdentity();
-    gl::mModelView.lookAt(k3d::vec3(-8.0, 0.0, 0.2), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 0.0, 1.0));
+    gl::mModelView.lookAt(k3d::vec3(0.0, -3.0, 15.0), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
 
     gl::vLight0 = light;
     gl::sendLight0();
@@ -123,16 +130,16 @@ void TankGame::renderFrame()
 
     gl::mModelView.scalef(8.0, 8.0, 1.0);
     gl::sendMatrices();
-    glUniform4f(gvColorHandle, 0.4, 0.33, 0.29, 1.0);
+    glUniform4f(gvColor, 0.4, 0.33, 0.29, 1.0);
     checkGlError("glUniform4f");
-    floor.draw(gvPositionHandle, gvNormalHandle);
+    floor.draw();
 
     gl::mModelView = tmpMat;
     gl::sendMatrices();
-    glUniform4f(gvColorHandle, 0.1, 0.8, 2.9, 1.0);
+    glUniform4f(gvColor, 0.1, 0.8, 2.9, 1.0);
     checkGlError("glUniform4f");
     for (unsigned i = 0; i < tanks.size(); i++)
-        tanks[i].draw(gvPositionHandle, gvNormalHandle);
+        tanks[i].draw();
 }
 
 void TankGame::step()

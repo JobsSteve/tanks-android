@@ -48,10 +48,6 @@ struct saved_state {
 struct engine {
     struct android_app* app;
 
-    ASensorManager* sensorManager;
-    const ASensor* accelerometerSensor;
-    ASensorEventQueue* sensorEventQueue;
-
     int animating;
     EGLDisplay display;
     EGLSurface surface;
@@ -134,13 +130,15 @@ static int engine_init_display(struct engine* engine) {
     engine->height = h;
     engine->state.angle = 0;
 
+    return 0;
+}
+
+void game_init(const struct engine *engine)
+{
     gGame = new TankGame();
     gGame->initialize();
-    gGame->reshape(w, h);
-
-    LOGI("done with init\n");
-
-    return 0;
+    gGame->loadLevel();
+    gGame->reshape(engine->width, engine->height);
 }
 
 /**
@@ -207,6 +205,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             // The window is being shown, get it ready.
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
+                game_init(engine); // This must run after engine_init_display since we need gl setup
                 engine_draw_frame(engine);
             }
             break;

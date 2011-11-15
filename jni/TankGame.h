@@ -17,19 +17,15 @@ class TankGame
 {
 friend class Tank;
     GLuint gProgram;
-    GLuint gvPositionHandle;
-    GLuint gvNormalHandle;
-    GLuint gvColorHandle;
+    GLuint gvColor;
 
     k3d::model floor;
     k3d::model walls;
     std::vector<Tank> tanks;
 
-    void loadlevel();
-
     void renderFrame();
 public:
-    TankGame() { loadlevel(); }
+    void loadLevel();
 
     bool reshape(int w, int h);
 

@@ -11,17 +11,16 @@ k3d::model Tank::mHead;
 
 void Tank::initialize()
 {
-    LOGI("Tank::initialize()\n");
     mTreads.loadObj(Tank::treadsObj);
     mHead.loadObj(Tank::headObj);
 }
 
-void Tank::draw(GLuint gvPositionHandle, GLuint gvNormalHandle)
+void Tank::draw()
 {
     /**
      * Tank models draw a tank centred and on the xy plane
      * i.e. the tank lies in z > 0. It also is within the
-     * canonical GL volume
+     * canonical GL volume. It is aiming and facing in -Y
      */
 
     k3d::mat4 mMVBackup(gl::mModelView);
@@ -30,13 +29,13 @@ void Tank::draw(GLuint gvPositionHandle, GLuint gvNormalHandle)
     // TODO: rotate to velocity vector
     gl::mModelView.translatef(pos.x, pos.y, 0.0);
     gl::sendMatrices();
-    mTreads.draw(gvPositionHandle, gvNormalHandle);
+    mTreads.draw();
 
     gl::mModelView = mMVBackup;
     // TODO: rotate to aim
     gl::mModelView.translatef(pos.x, pos.y, 0.0);
     // now re glUniform() (TODO)
-    mHead.draw(gvPositionHandle, gvNormalHandle);
+    mHead.draw();
 
     gl::mModelView = mMVBackup;
 }
