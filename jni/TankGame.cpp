@@ -20,11 +20,8 @@ void TankGame::initialize()
     GLuint gmModelView;
     GLuint gmModelViewProjection;
     GLuint gmNormalMatrix;
+    GLuint gvColor;
     GLuint gvLightSource0;
-
-    // Again this is a load level kinda thing
-    // but we need to do it only once so.....
-    Tank::initialize();
 
     glClearColor(0.0, 0.0, 0.0, 1.0f);
     checkGlError("glClearColor");
@@ -77,36 +74,40 @@ void TankGame::initialize()
             gmModelView);
 
     k3d::gl::initialize(gvPosition, gvNormal, gmModelView, gmModelViewProjection,
-                        gmNormalMatrix, gvLightSource0);
+            gmNormalMatrix, gvColor, gvLightSource0);
 
     int depth;
     glEnable(GL_DEPTH_TEST);
     glGetIntegerv(GL_DEPTH_BITS, &depth);
-    LOGI("GL_DEPTH_BITS = %d\n", depth);
+    LOGI("GL_DEPTH_BITS = %d\n\tmeander\n", depth);
 }
 
 bool TankGame::reshape(int w, int h)
 {
-    float ratio = (float)h/(float)w;
+    touchW = w;
+    touchH = h;
 
-    LOGI("TankGame::reshape()\n");
+    float ratio = (float)h/(float)w;
 
     glViewport(0, 0, w, h);
     checkGlError("glViewport");
 
     gl::mProjection.loadIdentity();
-    gl::mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.5, -20);
+    gl::mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.0, -40);
 
     return true;
 }
 
 void TankGame::loadLevel()
 {
-    floor.loadObj("/sdcard/tanks/floor.obj");
-    walls.loadObj("/sdcard/tanks/wall.obj");
-    tanks.clear();
-    tanks.push_back(Tank(k3d::vec2(-6.0, 0.0)));
-    tanks.push_back(Tank(k3d::vec2(1.0, 1.0)));
+    me.pos = k3d::vec2(3.0, 4.0);
+    me.aim =  k3d::vec2(1.0, 0.0);
+    me.velocity = k3d::vec2(1.0,0.0);
+
+    eye = k3d::vec3(0.0, -3.0, 15.0);
+
+    lvl.width = 24;
+    lvl.height = 18;
 }
 
 void TankGame::renderFrame()
@@ -115,37 +116,39 @@ void TankGame::renderFrame()
     checkGlError("glClear");
 
     k3d::mat4 tmpMat;
-    k3d::vec3 light(0.5, 0.8, 5.0);
+    k3d::vec3 light(4.0, 3.0, 20.0);
 
     glUseProgram(gProgram);
     checkGlError("glUseProgram");
 
     gl::mModelView.loadIdentity();
-    gl::mModelView.lookAt(k3d::vec3(0.0, -3.0, 15.0), k3d::vec3(0.0, 0.0, 0.0), k3d::vec3(0.0, 1.0, 0.0));
+    gl::mModelView.lookAt(k3d::vec3(me.pos.x, me.pos.y - 1.5, 7.0), k3d::vec3(me.pos.x, me.pos.y, 0.0), k3d::vec3(0.0, 1.0, 0.0));
 
     gl::vLight0 = light;
     gl::sendLight0();
 
     tmpMat = gl::mModelView;
 
-    gl::mModelView.scalef(8.0, 8.0, 1.0);
-    gl::sendMatrices();
-    glUniform4f(gvColor, 0.4, 0.33, 0.29, 1.0);
-    checkGlError("glUniform4f");
-    floor.draw();
+    lvl.draw();
 
     gl::mModelView = tmpMat;
     gl::sendMatrices();
-    glUniform4f(gvColor, 0.1, 0.8, 2.9, 1.0);
-    checkGlError("glUniform4f");
-    for (unsigned i = 0; i < tanks.size(); i++)
-        tanks[i].draw();
+    me.draw();
 }
 
 void TankGame::step()
 {
-    for (unsigned i = 0; i < tanks.size(); i++)
-        tanks[i].step();
-
     renderFrame();
+    me.pos = me.pos + me.speed*me.velocity;
+}
+
+void TankGame::touch(int x, int y, bool down)
+{
+    LOGI("touch(%d,%d)\n", x, y);
+    if (down == true) {
+        me.velocity = (k3d::vec2(x - touchW/2, touchH/2 - y).normalize());
+        me.speed = 0.1;
+    } else {
+        me.speed = 0.0;
+    }
 }

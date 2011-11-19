@@ -34,15 +34,6 @@
 TankGame *gGame = NULL;
 
 /**
- * Our saved state data.
- */
-struct saved_state {
-    float angle;
-    int32_t x;
-    int32_t y;
-};
-
-/**
  * Shared state for our app.
  */
 struct engine {
@@ -54,7 +45,7 @@ struct engine {
     EGLContext context;
     int32_t width;
     int32_t height;
-    struct saved_state state;
+//    struct saved_state state;
 };
 
 /**
@@ -128,14 +119,16 @@ static int engine_init_display(struct engine* engine) {
     engine->surface = surface;
     engine->width = w;
     engine->height = h;
-    engine->state.angle = 0;
 
     return 0;
 }
 
 void game_init(const struct engine *engine)
 {
-    gGame = new TankGame();
+    if (gGame == NULL) {
+        gGame = new TankGame();
+    }
+
     gGame->initialize();
     gGame->loadLevel();
     gGame->reshape(engine->width, engine->height);
@@ -182,8 +175,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     struct engine* engine = (struct engine*)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         engine->animating = 1;
-        engine->state.x = AMotionEvent_getX(event, 0);
-        engine->state.y = AMotionEvent_getY(event, 0);
+        int x = AMotionEvent_getX(event, 0);
+        int y = AMotionEvent_getY(event, 0);
+        int32_t action = AMotionEvent_getAction(event);
+
+        gGame->touch(x, y, action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
+
         return 1;
     }
     return 0;
@@ -197,9 +194,12 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
+            // TODO: something useful like this:
+            /*
             engine->app->savedState = malloc(sizeof(struct saved_state));
             *((struct saved_state*)engine->app->savedState) = engine->state;
             engine->app->savedStateSize = sizeof(struct saved_state);
+            */
             break;
         case APP_CMD_INIT_WINDOW:
             // The window is being shown, get it ready.
@@ -241,8 +241,7 @@ void android_main(struct android_app* state) {
     engine.app = state;
 
     if (state->savedState != NULL) {
-        // We are starting with a previous saved state; restore from it.
-        engine.state = *(struct saved_state*)state->savedState;
+        // TODO something useful
     }
 
     // loop waiting for stuff to do.

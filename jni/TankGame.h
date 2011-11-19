@@ -6,6 +6,7 @@
 
 #include "libk3d/k3d.h"
 #include "Tank.h"
+#include "Level.h"
 
 class Tank;
 
@@ -17,14 +18,19 @@ class TankGame
 {
 friend class Tank;
     GLuint gProgram;
-    GLuint gvColor;
 
-    k3d::model floor;
-    k3d::model walls;
+    k3d::vec3 eye;
+
+    Level lvl;
+    Tank me;
     std::vector<Tank> tanks;
+
+    int touchW, touchH;
 
     void renderFrame();
 public:
+    TankGame(): touchW(-1), touchH(-1) {}
+
     void loadLevel();
 
     bool reshape(int w, int h);
@@ -32,6 +38,8 @@ public:
     void initialize();
 
     void step();
+
+    void touch(int x, int y, bool down);
 };
 
 #endif //_TANKGAME_H
