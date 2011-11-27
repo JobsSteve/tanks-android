@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+#TODO learn how to build libk3d and libtanks seperately...
+
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libtanks
-LOCAL_CFLAGS    := -Werror -Ijni/libk3d/
-LOCAL_SRC_FILES := main.cpp TankGame.cpp Tank.cpp Level.cpp util.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp libk3d/vec2.cpp libk3d/gl.cpp
+LOCAL_CFLAGS    := -Wall -Ijni/libk3d/
+LOCAL_SRC_FILES := main.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp libk3d/vec2.cpp libk3d/gl.cpp libtanks/Level.cpp libtanks/Missile.cpp libtanks/Tank.cpp libtanks/TankGameModel.cpp libtanks/TankGameView.cpp
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 

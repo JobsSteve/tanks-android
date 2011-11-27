@@ -25,13 +25,18 @@
 #include <android/sensor.h>
 #include <android_native_app_glue.h>
 
-#include "TankGame.h"
-#include "util.h"
+#include <android/log.h>
+#define  LOG_TAG    "tanks"
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-/**
- * Global TankGame pointer
- */
-TankGame *gGame = NULL;
+#include "libtanks/TankGameModel.h"
+#include "libtanks/TankGameView.h"
+
+using k3d::gl;
+
+TankGameModel game;
+TankGameView view(&game);
 
 /**
  * Shared state for our app.
@@ -74,9 +79,8 @@ static int engine_init_display(struct engine* engine) {
         EGL_NONE
     };
 
-    EGLint w, h, dummy, format;
+    EGLint w, h, format;
     EGLint numConfigs;
-    EGLConfig configs[100];
     EGLConfig config;
     EGLSurface surface;
     EGLContext context;
@@ -125,13 +129,18 @@ static int engine_init_display(struct engine* engine) {
 
 void game_init(const struct engine *engine)
 {
-    if (gGame == NULL) {
-        gGame = new TankGame();
+    gl::initialize("/sdcard/tanks/tanks.vs", "/sdcard/tanks/tanks.fs");
+    if (game.loadTestLevel() == false) {
+        LOGE("loadTestLevel() failed");
     }
 
-    gGame->initialize();
-    gGame->loadLevel();
-    gGame->reshape(engine->width, engine->height);
+    // TODO do this when we receive a reshape notification from android
+    // and make it work for orientation change... also right now this is
+    // a hack to make it work in landscape (width and height have been switched)
+    float ratio = (float)engine->width/(float)engine->height;
+    glViewport(0, 0, engine->height, engine->width);
+    gl::mProjection.loadIdentity();
+    gl::mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.0, -40.0);
 }
 
 /**
@@ -142,9 +151,8 @@ static void engine_draw_frame(struct engine* engine) {
         // No display.
         return;
     }
-
-    gGame->step();
-
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    view.renderFrame();
     eglSwapBuffers(engine->display, engine->surface);
 }
 
@@ -175,11 +183,12 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     struct engine* engine = (struct engine*)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         engine->animating = 1;
+        /*
         int x = AMotionEvent_getX(event, 0);
         int y = AMotionEvent_getY(event, 0);
         int32_t action = AMotionEvent_getAction(event);
-
-        gGame->touch(x, y, action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
+        TODO gGame->touch(x, y, action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
+        */
 
         return 1;
     }
@@ -241,7 +250,7 @@ void android_main(struct android_app* state) {
     engine.app = state;
 
     if (state->savedState != NULL) {
-        // TODO something useful
+        // TODO something useful (copy in the savedState ...)
     }
 
     // loop waiting for stuff to do.
