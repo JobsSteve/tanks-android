@@ -129,9 +129,19 @@ static int engine_init_display(struct engine* engine) {
 
 void game_init(const struct engine *engine)
 {
-    gl::initialize("/sdcard/tanks/tanks.vs", "/sdcard/tanks/tanks.fs");
-    if (game.loadTestLevel() == false) {
-        LOGE("loadTestLevel() failed");
+    // TODO kill app if stuff fails here.
+    if (gl::initialize("/sdcard/tanks/tanks.vs", "/sdcard/tanks/tanks.fs") == false) {
+        LOGE("gl::initialize() failed\n");
+    }
+    if (game.loadLevel("/sdcard/tanks/simple.lvl") == false) {
+        LOGE("game.loadLevel() failed\n");
+    }
+
+    if (view.loadModels("/sdcard/tanks/floor.obj",
+                    "/sdcard/tanks/wall.obj",
+                    "/sdcard/tanks/tank_head.obj",
+                    "/sdcard/tanks/tank_treads.obj") == false) {
+        LOGE("view.loadModels() failed");
     }
 
     // TODO do this when we receive a reshape notification from android
