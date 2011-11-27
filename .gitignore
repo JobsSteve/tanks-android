@@ -1,0 +1,8 @@
+ant.properties
+local.properties
+project.properties
+bin/
+gen/
+libs/
+obj/
+*.swp
