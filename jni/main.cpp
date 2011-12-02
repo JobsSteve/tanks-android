@@ -30,13 +30,17 @@
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
+#include <stdlib.h>
+
 #include "libtanks/TankGameModel.h"
 #include "libtanks/TankGameView.h"
+#include "libtanks/TouchController.h"
 
 using k3d::gl;
 
 TankGameModel game;
 TankGameView view(&game);
+TouchController controller(&game, &view);
 
 /**
  * Shared state for our app.
@@ -133,12 +137,16 @@ void game_init(const struct engine *engine)
     if (gl::initialize("/sdcard/tanks/tanks.vs", "/sdcard/tanks/tanks.fs") == false) {
         LOGE("gl::initialize() failed\n");
     }
+
+    srand(time(NULL));
+
     if (game.loadLevel("/sdcard/tanks/simple.lvl") == false) {
         LOGE("game.loadLevel() failed\n");
     }
 
     if (view.loadModels("/sdcard/tanks/floor.obj",
                     "/sdcard/tanks/wall.obj",
+                    "/sdcard/tanks/missile.obj",
                     "/sdcard/tanks/tank_head.obj",
                     "/sdcard/tanks/tank_treads.obj") == false) {
         LOGE("view.loadModels() failed");
@@ -151,6 +159,7 @@ void game_init(const struct engine *engine)
     glViewport(0, 0, engine->height, engine->width);
     gl::mProjection.loadIdentity();
     gl::mProjection.perspective(-1.0, 1.0, 1.0*ratio, -1.0*ratio, -1.0, -40.0);
+    controller.setRes(engine->height, engine->width);
 }
 
 /**
@@ -162,6 +171,7 @@ static void engine_draw_frame(struct engine* engine) {
         return;
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    game.step();
     view.renderFrame();
     eglSwapBuffers(engine->display, engine->surface);
 }
@@ -193,12 +203,10 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     struct engine* engine = (struct engine*)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         engine->animating = 1;
-        /*
         int x = AMotionEvent_getX(event, 0);
         int y = AMotionEvent_getY(event, 0);
         int32_t action = AMotionEvent_getAction(event);
-        TODO gGame->touch(x, y, action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
-        */
+        controller.touch(x, y, action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
 
         return 1;
     }

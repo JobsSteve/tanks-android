@@ -21,7 +21,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libtanks
 LOCAL_CFLAGS    := -Wall -Ijni/libk3d/
-LOCAL_SRC_FILES := main.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp libk3d/vec2.cpp libk3d/gl.cpp libtanks/Level.cpp libtanks/Missile.cpp libtanks/Tank.cpp libtanks/TankGameModel.cpp libtanks/TankGameView.cpp
+LOCAL_SRC_FILES := main.cpp libk3d/mat4.cpp libk3d/model.cpp libk3d/vec3.cpp libk3d/vec2.cpp libk3d/gl.cpp libtanks/Level.cpp libtanks/Missile.cpp libtanks/Tank.cpp libtanks/TankGameModel.cpp libtanks/TankGameView.cpp libtanks/collide.cpp libtanks/TankGameController.cpp libtanks/TouchController.cpp
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
